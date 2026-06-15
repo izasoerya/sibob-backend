@@ -44,6 +44,18 @@ void setup()
 	wifi.begin();
 	ElegantOTA.begin(&server);
 	ElegantOTA.setAutoReboot(true);
+
+	server.on("/", []()
+			  { 
+				String buffer;
+				serializeJsonPretty(sensors.toJsonDocument(), buffer);
+				server.send(200, "application/json", buffer); });
+
+	server.on("/restart", []()
+			  { 
+				server.send(200, "text/plain", "Restarting now..."); 
+				ESP.restart(); });
+
 	server.begin();
 
 	sensors.temperature_air.status = dht.begin();
