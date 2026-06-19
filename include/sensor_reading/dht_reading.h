@@ -2,40 +2,57 @@
 #define DHT_READING_H
 
 #include <Arduino.h>
-#include <DHT11.h>
+#include <DHT.h>
 
 class DHTWrapper
 {
 public:
-    DHTWrapper(const uint8_t pinDHT) : _pinDHT(pinDHT), _dht11(DHT11(pinDHT)) {}
+    DHTWrapper(const uint8_t pinDHT) : _pinDHT(pinDHT), _dht(pinDHT, DHT22) {}
     ~DHTWrapper() {}
 
     uint8_t begin()
     {
-        int result = _dht11.readTemperature();
-        if (result == 0)
+        _dht.begin();
+        float temp = _dht.readTemperature();
+        if (isnan(temp))
         {
-            return 1;
+            Serial.println("DHT22 read failed");
+            return 0;
         }
         else
         {
-            Serial.println(DHT11::getErrorString(result));
-            return 0;
+            return 1;
         }
     }
 
     float getTemperature()
     {
-        return _dht11.readTemperature();
+        float val = _dht.readTemperature();
+        if (isnan(val))
+        {
+            return 0.0;
+        }
+        else
+        {
+            return val;
+        }
     }
     float getHumidity()
     {
-        return _dht11.readHumidity();
+        float val = _dht.readHumidity();
+        if (isnan(val))
+        {
+            return 0.0;
+        }
+        else
+        {
+            return val;
+        }
     }
 
 private:
     const uint8_t _pinDHT;
-    DHT11 _dht11;
+    DHT _dht;
 };
 
 #endif
