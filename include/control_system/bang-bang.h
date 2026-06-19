@@ -39,23 +39,32 @@ public:
         if (temperature > _configSetPoint.upperTemp)
         {
             // Turn off exhaust fan
-            digitalWrite(_configActuator.pinExhaustFan, LOW);
+            digitalWrite(_configActuator.pinExhaustFan, HIGH);
+
+            Serial.print("FAN IS ON  pin: ");
+            Serial.print(_configActuator.pinExhaustFan);
         }
         else if (temperature < _configSetPoint.bottomTemp)
         {
             // Turn on exhaust fan
-            digitalWrite(_configActuator.pinExhaustFan, HIGH);
+            digitalWrite(_configActuator.pinExhaustFan, LOW);
+            Serial.println("FAN IS OFF pin: ");
+            Serial.print(_configActuator.pinExhaustFan);
         }
 
         if (humidity > _configSetPoint.upperHum)
         {
             // Turn off mist maker
             digitalWrite(_configActuator.pinMistMaker, LOW);
+            Serial.print("MIST IS OFF  pin: ");
+            Serial.print(_configActuator.pinMistMaker);
         }
         else if (humidity < _configSetPoint.bottomHum)
         {
             // Turn on mist maker
             digitalWrite(_configActuator.pinMistMaker, HIGH);
+            Serial.print("MIST IS ON  pin: ");
+            Serial.print(_configActuator.pinMistMaker);
         }
     }
 };
