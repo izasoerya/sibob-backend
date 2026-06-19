@@ -7,9 +7,21 @@
 int8_t weightBegin(HX711 &sc, uint8_t dataPin, uint8_t clockPin)
 {
     sc.begin(dataPin, clockPin);
-    sc.set_scale(127.15);
+    sc.set_scale(0);
     sc.set_offset(0);
+    // if (dataPin == 4)
+    // {
+    //     sc.set_offset(478858.00);
+    // }
+    // else if (dataPin == 5)
+    // {
+    //     sc.set_offset(-233375.00);
+    // }
     // sc.tare();
+    // Serial.print("Data: ");
+    // Serial.print(dataPin);
+    // Serial.print(", get tare: ");
+    // Serial.println(sc.get_tare());
 
     // TODO: DUNNO HOW TO DETECT IF SENSOR FAILING
     return 1;
@@ -17,7 +29,7 @@ int8_t weightBegin(HX711 &sc, uint8_t dataPin, uint8_t clockPin)
 
 float weightReading(HX711 &scale)
 {
-    return scale.read_average(5);
+    return scale.read_average(15);
 }
 
 bool calibrate(HX711 &scale)
