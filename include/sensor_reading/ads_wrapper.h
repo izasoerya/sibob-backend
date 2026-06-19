@@ -12,6 +12,7 @@ public:
 
     int8_t adsBegin()
     {
+        Wire.begin(6, 7);
         if (!_ads.begin())
         {
             Serial.println("ADS not found!");
