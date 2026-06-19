@@ -6,12 +6,13 @@
 
 struct SensorProp
 {
-    float value;
+    float value = 0.0;
     int8_t status;
 };
 
 struct SensorData
 {
+    byte id;
     SensorProp temperature_soil;
     SensorProp humidity_soil;
     SensorProp ph;
@@ -24,10 +25,11 @@ struct SensorData
     JsonDocument toJsonDocument() const
     {
         JsonDocument doc;
+        doc["device_id"] = id;
         doc["temperature_soil"] = temperature_soil.value;
         doc["humidity_soil"] = humidity_soil.value;
         doc["ph"] = ph.value;
-        doc["weight"] = weight_breed.value * 0.5 + weight_yield.value * 0.5;
+        doc["weight"] = weight_breed.value * 0.35 + weight_yield.value * 0.85;
         doc["temperature_air"] = temperature_air.value;
         doc["humidity_air"] = humidity_air.value;
 
