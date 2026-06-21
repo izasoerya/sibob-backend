@@ -18,9 +18,9 @@ float soilHumidityReading(ADSWrapper &ads)
 #if defined(SIBOB_1)
     const int16_t DRY_VALUE = 4566; // no water reading
     const int16_t WET_VALUE = 4639; // water reading
-#else defined(SIBOB_2)
-    const int16_t DRY_VALUE = 3145; // no water reading
-    const int16_t WET_VALUE = 3227; // water reading
+#elif defined(SIBOB_2)
+    const int16_t DRY_VALUE = 4200; // no water reading
+    const int16_t WET_VALUE = 4500; // water reading
 #endif
 
     float humidity = (float)(raw - DRY_VALUE) / (WET_VALUE - DRY_VALUE) * 100.0;
@@ -40,7 +40,7 @@ float soilHumidityReading(ADSWrapper &ads)
         smoothedHumidity = ALPHA * humidity + (1 - ALPHA) * smoothedHumidity;
     }
 
-    return raw;
+    return smoothedHumidity;
 }
 
 #endif
