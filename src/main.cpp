@@ -1,6 +1,8 @@
 #include <Arduino.h>
 #include <WiFi.h>
 #include <ElegantOTA.h>
+#include <ESPAsyncWebServer.h>
+#include <WebSerial.h>
 #include "models.h"
 #include "connection_wifi.h"
 #include "esp_task_wdt.h"
@@ -26,7 +28,7 @@ WiFiConnection wifi("Bengkel Inovasi Indonesia", "EKSPEKTASI", "sibob-1");
 #elif defined(SIBOB_2)
 WiFiConnection wifi("Bengkel Inovasi Indonesia", "EKSPEKTASI", "sibob-2");
 #endif
-WebServer server(80);
+AsyncWebServer server(80);
 SensorData sensors;
 
 DHTWrapper dht(PIN_DHT);
@@ -38,6 +40,34 @@ DS18B20 ds(&oneWire);
 ADS1115 ads(0x48);
 ADSWrapper adsWrapper(ads);
 
+String sensorSnapshotJson()
+{
+	JsonDocument doc = sensors.toJsonDocument();
+	String payload;
+	serializeJsonPretty(doc, payload);
+	return payload;
+}
+
+int publishSensorSnapshot()
+{
+	JsonDocument doc = sensors.toJsonDocument();
+	JsonDocument supabaseDoc;
+	supabaseDoc["temperature_soil"] = sensors.temperature_soil.value;
+	supabaseDoc["humidity_soil"] = sensors.humidity_soil.value;
+	supabaseDoc["ph"] = sensors.ph.value;
+	supabaseDoc["weight"] = doc["weight"];
+	supabaseDoc["temperature_air"] = sensors.temperature_air.value;
+	supabaseDoc["humidity_air"] = sensors.humidity_air.value;
+	supabaseDoc["status"] = doc["status"];
+	supabaseDoc["device_id"] = sensors.id;
+	String payload;
+	serializeJsonPretty(doc, payload);
+
+	Serial.println(payload);
+	WebSerial.println(payload);
+	return wifi.postSupabase(supabaseDoc);
+}
+
 void setup()
 {
 	esp_task_wdt_init(30, true);
@@ -47,21 +77,18 @@ void setup()
 	wifi.begin();
 	ElegantOTA.begin(&server);
 	ElegantOTA.setAutoReboot(true);
+	WebSerial.begin(&server, "/webserial");
 
 	pinMode(0, OUTPUT);
 	pinMode(1, OUTPUT);
 	pinMode(3, OUTPUT);
 
-	server.on("/", []()
-			  { 
-				String buffer;
-				serializeJsonPretty(sensors.toJsonDocument(), buffer);
-				server.send(200, "application/json", buffer); });
+	server.on("/", HTTP_GET, [](AsyncWebServerRequest *request)
+			  { request->send(200, "application/json", sensorSnapshotJson()); });
 
-	server.on("/restart", []()
-			  { 
-				server.send(200, "text/plain", "Restarting now..."); 
-				ESP.restart(); });
+	server.on("/restart", HTTP_GET, [](AsyncWebServerRequest *request)
+			  { request->send(200, "text/plain", "Restarting now...");
+				  ESP.restart(); });
 
 	server.begin();
 
@@ -84,17 +111,20 @@ void loop()
 	wifi.reconnect();
 	esp_task_wdt_reset();
 
-	if (millis() > lastUpdate + 10000)
+	if (millis() > lastUpdate + 20000)
 	{
 #if defined(SIBOB_1)
 		sensors.id = 1;
-		sensors.weight_breed.value = (478804.59 - weightReading(hx1)) * 0.0075775;
-		sensors.weight_yield.value = (-232862.92 - weightReading(hx2)) * 0.007118;
-#else defined(SIBOB_2)
+		sensors.weight_breed.value = weightReading(hx1);
+		sensors.weight_yield.value = weightReading(hx2);
+#elif defined(SIBOB_2)
 		sensors.id = 2;
-		sensors.weight_breed.value = (478804.59 - weightReading(hx1)) * 0.0075775;
-		sensors.weight_yield.value = (-232862.92 - weightReading(hx2)) * 0.007118;
+		sensors.weight_breed.value = weightReading(hx1);
+		sensors.weight_yield.value = weightReading(hx2);
 #endif
+		WebSerial.printf("Weight: %.1f\n",
+						 (sensors.weight_breed.value * 0.5 + sensors.weight_yield.value * 0.5));
+
 		sensors.temperature_air.value = dht.getTemperature();
 		sensors.humidity_air.value = dht.getHumidity();
 		sensors.temperature_soil.value = soilTemperatureReading(ds);
@@ -106,11 +136,10 @@ void loop()
 			ActuatorConfig{0, 1, 3});		// pin fan, pin mist, pin heater
 		bang.control(sensors.temperature_soil.value, sensors.humidity_soil.value);
 
-		wifi.postSupabase(sensors.toJsonDocument());
-		serializeJsonPretty(sensors.toJsonDocument(), Serial);
+		int response = publishSensorSnapshot();
+		WebSerial.printf("Supabase Res Code: %d\n", response);
 		lastUpdate = millis();
 	}
 
 	ElegantOTA.loop();
-	server.handleClient();
 }
