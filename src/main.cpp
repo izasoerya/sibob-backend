@@ -23,10 +23,19 @@
 #define PIN_EN_PH 8
 #define PIN_CLK 10
 
+#define TOP_TEMP_SET 25
+#define BOT_TEMP_SET 10
+#define TOP_HUM_SET 90
+#define BOT_HUM_SET 40
+
+const char *ssid = "Bengkel Inovasi Indonesia";
+const char *password = "EKSPEKTASI";
+const char *hostname = "sibob-1";
+
 #if defined(SIBOB_1)
-WiFiConnection wifi("Bengkel Inovasi Indonesia", "EKSPEKTASI", "sibob-1");
+WiFiConnection wifi(ssid, password, hostname);
 #elif defined(SIBOB_2)
-WiFiConnection wifi("Bengkel Inovasi Indonesia", "EKSPEKTASI", "sibob-2");
+WiFiConnection wifi(ssid, password, hostname);
 #endif
 AsyncWebServer server(80);
 SensorData sensors;
@@ -132,8 +141,11 @@ void loop()
 		sensors.ph.value = ph.phReading(adsWrapper);
 
 		static const BangBangController bang(
-			BangBangConfig{25, 10, 90, 40}, // top temp, bot temp, top hum, bot hum
-			ActuatorConfig{0, 1, 3});		// pin fan, pin mist, pin heater
+			BangBangConfig{TOP_TEMP_SET,
+						   BOT_TEMP_SET,
+						   TOP_HUM_SET,
+						   BOT_HUM_SET}, // top temp, bot temp, top hum, bot hum
+			ActuatorConfig{0, 1, 3});	 // pin fan, pin mist, pin heater
 		bang.control(sensors.temperature_soil.value, sensors.humidity_soil.value);
 
 		int response = publishSensorSnapshot();
