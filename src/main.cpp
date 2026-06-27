@@ -114,13 +114,21 @@ void setup()
 }
 
 uint64_t lastUpdate = 0;
+uint64_t lastTimerHeater = 0;
 
 void loop()
 {
 	wifi.reconnect();
 	esp_task_wdt_reset();
 
-	if (millis() > lastUpdate + 20000)
+	static const BangBangController bang(
+		BangBangConfig{TOP_TEMP_SET,
+					   BOT_TEMP_SET,
+					   TOP_HUM_SET,
+					   BOT_HUM_SET}, // top temp, bot temp, top hum, bot hum
+		ActuatorConfig{0, 1, 3});	 // pin fan, pin mist, pin heater
+
+	if (millis() - lastUpdate >= 20000)
 	{
 #if defined(SIBOB_1)
 		sensors.id = 1;
@@ -140,17 +148,25 @@ void loop()
 		sensors.humidity_soil.value = soilHumidityReading(adsWrapper);
 		sensors.ph.value = ph.phReading(adsWrapper);
 
-		static const BangBangController bang(
-			BangBangConfig{TOP_TEMP_SET,
-						   BOT_TEMP_SET,
-						   TOP_HUM_SET,
-						   BOT_HUM_SET}, // top temp, bot temp, top hum, bot hum
-			ActuatorConfig{0, 1, 3});	 // pin fan, pin mist, pin heater
-		bang.control(sensors.temperature_soil.value, sensors.humidity_soil.value);
-
 		int response = publishSensorSnapshot();
 		WebSerial.printf("Supabase Res Code: %d\n", response);
 		lastUpdate = millis();
+	}
+
+	if (millis() - lastTimerHeater >= 10000)
+	{
+		static bool flipFlag = false;
+		bang.control(
+			sensors.temperature_soil.value,
+			sensors.humidity_soil.value);
+
+		bang.controlHeater(
+			sensors.temperature_soil.value,
+			sensors.humidity_soil.value,
+			flipFlag);
+
+		flipFlag = !flipFlag;
+		lastTimerHeater = millis();
 	}
 
 	ElegantOTA.loop();

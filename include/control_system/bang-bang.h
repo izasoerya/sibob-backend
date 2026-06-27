@@ -56,21 +56,31 @@ public:
         {
             // Turn off mist maker
             digitalWrite(_configActuator.pinMistMaker, LOW);
-            analogWrite(_configActuator.pinHeater, 76);
             Serial.print("MIST IS OFF  pin: ");
             Serial.print(_configActuator.pinMistMaker);
-            Serial.print("; HEATER IS ON  pin: ");
-            Serial.print(_configActuator.pinHeater);
         }
         else if (humidity < _configSetPoint.bottomHum)
         {
             // Turn on mist maker
             digitalWrite(_configActuator.pinMistMaker, HIGH);
-            analogWrite(_configActuator.pinHeater, 0);
             Serial.print("MIST IS ON  pin: ");
             Serial.print(_configActuator.pinMistMaker);
-            Serial.print("; HEATER IS ON  pin: ");
-            Serial.print(_configActuator.pinHeater);
+        }
+    }
+
+    void controlHeater(float temperature, float humidity, bool forcedOff) const
+    {
+        if (forcedOff || (humidity <= _configSetPoint.upperHum))
+        {
+            analogWrite(_configActuator.pinHeater, 0);
+            Serial.print("HEATER IS OFF  pin: ");
+            Serial.println(_configActuator.pinHeater);
+        }
+        else if (humidity > _configSetPoint.upperHum)
+        {
+            analogWrite(_configActuator.pinHeater, 30);
+            Serial.print("HEATER IS ON  pin: ");
+            Serial.println(_configActuator.pinHeater);
         }
     }
 };
