@@ -70,13 +70,23 @@ public:
 
     void controlHeater(float temperature, float humidity, bool forcedOff) const
     {
-        if (forcedOff || (humidity <= _configSetPoint.upperHum))
+        static bool heatDemand = false;
+        if (temperature < _configSetPoint.bottomTemp)
+        {
+            heatDemand = true;
+        }
+        else if (temperature >= _configSetPoint.upperTemp)
+        {
+            heatDemand = false;
+        }
+
+        if (forcedOff || !heatDemand)
         {
             analogWrite(_configActuator.pinHeater, 0);
             Serial.print("HEATER IS OFF  pin: ");
             Serial.println(_configActuator.pinHeater);
         }
-        else if (humidity > _configSetPoint.upperHum)
+        else
         {
             analogWrite(_configActuator.pinHeater, 30);
             Serial.print("HEATER IS ON  pin: ");
