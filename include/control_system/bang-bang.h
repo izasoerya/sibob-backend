@@ -40,7 +40,6 @@ public:
         {
             // Turn off exhaust fan
             digitalWrite(_configActuator.pinExhaustFan, HIGH);
-
             Serial.print("FAN IS ON  pin: ");
             Serial.print(_configActuator.pinExhaustFan);
         }
@@ -58,6 +57,11 @@ public:
             digitalWrite(_configActuator.pinMistMaker, LOW);
             Serial.print("MIST IS OFF  pin: ");
             Serial.print(_configActuator.pinMistMaker);
+            
+            // Turn off exhaust fan
+            digitalWrite(_configActuator.pinExhaustFan, HIGH);
+            Serial.print("FAN IS ON  pin: ");
+            Serial.print(_configActuator.pinExhaustFan);
         }
         else if (humidity < _configSetPoint.bottomHum)
         {
@@ -65,6 +69,11 @@ public:
             digitalWrite(_configActuator.pinMistMaker, HIGH);
             Serial.print("MIST IS ON  pin: ");
             Serial.print(_configActuator.pinMistMaker);
+
+            // Turn on exhaust fan
+            digitalWrite(_configActuator.pinExhaustFan, LOW);
+            Serial.println("FAN IS OFF pin: ");
+            Serial.print(_configActuator.pinExhaustFan);
         }
     }
 
