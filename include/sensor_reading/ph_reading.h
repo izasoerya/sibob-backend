@@ -35,7 +35,7 @@ public:
         else
             smoothedPH = ALPHA * ph + (1 - ALPHA) * smoothedPH;
 
-        return smoothedPH;
+        return raw;
     }
 
 private:
